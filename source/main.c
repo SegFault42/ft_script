@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include "../libft/includes/libft.h"
 
 #define TTYS "/dev/ptmx"
@@ -44,8 +45,14 @@ int	main(int argc, char **argv, char **environ)
 {
 	int	fd;
 
-	fd = open("./typescript", O_RDWR | O_APPEND | O_CREAT, 644);
+	if (access("./typescript", F_OK) == 0)
+	{
+		fd = open("./typescript", O_APPEND);
+	}
+	else
+		fd = open("./typescript", O_CREAT, S_IRWXU);
 	if (fd == -1)
 		ft_dprintf(2, "Open failure %s\n", strerror(errno));
 	open_new_shell(argc, argv, environ);
+	close(fd);
 }
