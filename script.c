@@ -83,8 +83,7 @@ void	fail(void);
 void	finish(void);
 static void usage(void);
 
-int
-main(int argc, char *argv[])
+int	main(int argc, char *argv[])
 {
 	int cc;
 	struct termios rtt, stt;
@@ -121,35 +120,41 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0) {
+	if (argc > 0)
+	{
 		fname = argv[0];
 		argv++;
 		argc--;
-	} else
+	}
+	else
 		fname = "typescript";
 
 	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
 		err(1, "%s", fname);
-
-	if (ttyflg = isatty(STDIN_FILENO)) {
+	if ((ttyflg = isatty(STDIN_FILENO)))
+	{
 		if (tcgetattr(STDIN_FILENO, &tt) == -1)
 			err(1, "tcgetattr");
 		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1)
 			err(1, "ioctl");
 		if (openpty(&master, &slave, NULL, &tt, &win) == -1)
 			err(1, "openpty");
-	} else {
+	}
+	else
+	{
 		if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
 			err(1, "openpty");
 	}
 
-	if (!qflg) {
+	if (!qflg)
+	{
 		tvec = time(NULL);
 		(void)printf("Script started, output file is %s\n", fname);
 		(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
 		fflush(fscript);
 	}
-	if (ttyflg) {
+	if (ttyflg)
+	{
 		rtt = tt;
 		cfmakeraw(&rtt);
 		rtt.c_lflag &= ~ECHO;
@@ -157,7 +162,8 @@ main(int argc, char *argv[])
 	}
 
 	child = fork();
-	if (child < 0) {
+	if (child < 0)
+	{
 		warn("fork");
 		done(1);
 	}
@@ -174,23 +180,27 @@ main(int argc, char *argv[])
 
 	start = time(0);
 	FD_ZERO(&rfd);
-	for (;;) {
+	for (;;)
+	{
 		FD_SET(master, &rfd);
 		FD_SET(STDIN_FILENO, &rfd);
-		if (flushtime > 0) {
+		if (flushtime > 0)
+		{
 			tv.tv_sec = flushtime;
 			tv.tv_usec = 0;
 		}
 		n = select(master + 1, &rfd, 0, 0, tvp);
 		if (n < 0 && errno != EINTR)
 			break;
-		if (n > 0 && FD_ISSET(STDIN_FILENO, &rfd)) {
+		if (n > 0 && FD_ISSET(STDIN_FILENO, &rfd))
+		{
 			cc = read(STDIN_FILENO, ibuf, BUFSIZ);
 			if (cc < 0)
 				break;
 			if (cc == 0)
 				(void)write(master, ibuf, 0);
-			if (cc > 0) {
+			if (cc > 0)
+			{
 				(void)write(master, ibuf, cc);
 				if (kflg && tcgetattr(master, &stt) >= 0 &&
 				    ((stt.c_lflag & ECHO) == 0)) {
@@ -198,7 +208,8 @@ main(int argc, char *argv[])
 				}
 			}
 		}
-		if (n > 0 && FD_ISSET(master, &rfd)) {
+		if (n > 0 && FD_ISSET(master, &rfd))
+		{
 			cc = read(master, obuf, sizeof (obuf));
 			if (cc <= 0)
 				break;
@@ -206,7 +217,8 @@ main(int argc, char *argv[])
 			(void)fwrite(obuf, 1, cc, fscript);
 		}
 		tvec = time(0);
-		if (tvec - start >= flushtime) {
+		if (tvec - start >= flushtime)
+		{
 			fflush(fscript);
 			start = tvec;
 		}
