@@ -1,120 +1,253 @@
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/cdefs.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
 #include "../libft/includes/libft.h"
 
-#define TTYS "/dev/ptmx"
+#define PTMX "/dev/ptmx"
 #define BUF_SIZE 1024
 
-void	open_new_shell(int argc, char **argv, char **environ, int fd_file)
+int	ft_tcsetattr(int fd, int opt, const struct termios *t)
 {
-	int	fd_master;
-	int	fd_slave;
-	int	fd_stdin;
-	char	buff;
-	struct termios tty;
-	struct termios tty_old;
-	char tab[1024];
-	int	ret;
+	struct termios localterm;
 
-	ft_dprintf(1, CYAN"fd_file = %d\n"END, fd_file);
-	memset(&tab, 0, 1024);
-	memset(&tty, 0, sizeof(tty));
-	tty_old = tty;
-	fd_stdin = open(STDIN_FILENO, O_RDWR | O_NOCTTY);
-	fd_master = open(TTYS, O_RDWR | O_NOCTTY);
-	if (fd_master == -1)
-	{
-		ft_dprintf(2, RED"Error openning ptmx\n"END);
-		exit(-1);
+	if (opt & TCSASOFT) {
+		localterm = *t;
+		localterm.c_cflag |= CIGNORE;
+		t = &localterm;
 	}
-	ft_dprintf(2, GREEN"openning ptmx success\n"END);
-	fd_slave = open("/dev/ttys001", O_RDWR | O_NOCTTY);
-	ft_dprintf(1, CYAN"fd_2 = %d\n"END, fd_slave);
-	if (fd_slave == -1)
-	{
-		ft_dprintf(2, RED"Error openning /dev/ttys001\n"END);
-		exit(-1);
-	}
-		ft_dprintf(2, GREEN"openning /dev/ttys002 success\n"END);
-	while ((ret = read(fd_slave, &tab, 1024)) > 0)
-	{
-		ft_dprintf(2, GREEN"Read ok success\n"END);
-		if (ret == -1)
-		{
-			ft_dprintf(2, RED"Error read fd_slave\n"END);
-			exit(-1);
-		}
-		else if (ret == 0)
-			break ;
-		if (write(fd_file, &tab, 1024) == -1)
-		{
-			ft_dprintf(2, RED"Error write fd_file : %s\n"END, strerror(errno));
-			exit(-1);
-		}
-		ft_dprintf(2, GREEN"write ok success\n"END);
-		memset(&tab, 0, 1024);
+	switch (opt & ~TCSASOFT) {
+		case TCSANOW:
+			return (ioctl(fd, TIOCSETA, t));
+		case TCSADRAIN:
+			return (ioctl(fd, TIOCSETAW, t));
+		case TCSAFLUSH:
+			return (ioctl(fd, TIOCSETAF, t));
+		default:
+			errno = EINVAL;
+			return (-1);
 	}
 }
 
-/*void	open_new_shell(int argc, char **argv, char **environ, int fd_file)*/
-/*{*/
-	/*pid_t	father;*/
-	/*int		status;*/
-	/*char	*tab[] = {"env", "-i", "/bin/zsh", NULL};*/
-	/*char	buff;*/
-	/*int		fd_tty;*/
-	/*[>char	*name;<]*/
+void	ft_cfmakeraw(struct termios *t)
+{
+	t->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+	t->c_oflag &= ~OPOST;
+	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+	t->c_cflag &= ~(CSIZE|PARENB);
+	t->c_cflag |= CS8;
+}
 
-	/*[>if ((father = fork()) < 0)<]*/
-		/*[>dprintf(2, "Fork failure : %s\n", strerror(errno));<]*/
-	/*[>else if (father > 0)<]*/
-	/*[>{<]*/
-		/*if (argc == 1)*/
-			/*dprintf(1, "Script started, file is typescript\n");*/
-		/*else*/
-			/*dprintf(1, "Script started, file is %s\n", argv[1]);*/
-		/*while (1) // <== SHELL LVL 1*/
+int	ft_tcgetattr(int fd, struct termios *t)
+{
+	return (ioctl(fd, TIOCGETA, t));
+}
+
+int	ft_isatty(int fd)
+{
+	struct termios	t;
+
+	return(ft_tcgetattr(fd, &t) != -1);
+}
+
+int ft_login_tty(int fd)
+{
+	(void)setsid();
+	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
+		return (-1);
+	(void) dup2(fd, 0);
+	(void) dup2(fd, 1);
+	(void) dup2(fd, 2);
+	if (fd > 2)
+		(void) close(fd);
+	return (0);
+}
+
+int	ft_unlockpt(int fd)
+{
+	return ioctl(fd, TIOCPTYUNLK);
+}
+
+int	ft_openpt(int flags)
+{
+	int fd = open("/dev/ptmx", flags);
+	if (fd >= 0)
+		return (fd);
+	return -1;
+}
+
+int	ft_grantpt(int fd)
+{
+	return (ioctl(fd, TIOCPTYGRANT));
+}
+
+char	*ft_ptsname(int fd)
+{
+	static char	ptsnamebuf[ 128];
+	int			error;
+	char		*retval = NULL;
+	struct stat	sbuf;
+
+	error = ioctl(fd, TIOCPTYGNAME, ptsnamebuf);
+	if (!error)
+	{
+		if (stat(ptsnamebuf, &sbuf) == 0)
+			retval = ptsnamebuf;
+	}
+	return (retval);
+}
+
+void	open_new_shell(int argc, char **argv, char **environ)
+{
+	pid_t	father;
+	int		status;
+	char	*tab[] = {"/bin/zsh", NULL};
+	char	buff;
+	int		fd_ptmx;
+	int		fd_pts;
+	int		new_fd;
+	struct timeval	*tvp;
+	int		ret_select;
+	int		ret_read;
+	fd_set	rfd;
+	char	buffer_in[BUFSIZ];
+	char	buffer_out[BUFSIZ];
+	struct termios	rtt;
+	struct termios	stt;
+	struct termios	tt;
+	int		tty_flag;
+	struct winsize	win;
+
+	tvp = NULL;
+	if (tty_flag == ft_isatty(STDIN_FILENO))
+	{
+		if (ft_tcgetattr(STDIN_FILENO, &tt) == -1)
+		{
+			ft_dprintf(2, "Error ft_tcgetattr : %s\n", strerror(errno));
+			exit(-1);
+		}
+		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1)
+		{
+			ft_dprintf(2, "Error ioctl : %s\n", strerror(errno));
+			exit(-1);
+		}
+	}
+	if (tty_flag)
+	{
+		rtt = tt;
+		ft_cfmakeraw(&rtt);
+		rtt.c_cflag &= ~ECHO;
+		(void)ft_tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+	}
+	/*dprintf(1, GREEN"2) dup STDIN_FILENO Success\n"END);*/
+	if ((father = fork()) < 0)
+		dprintf(2, "Fork failure : %s\n", strerror(errno));
+	else if (father > 0)
+	{
+		if (argc == 1)
+			dprintf(1, "Script started, file is typescript\n");
+		else
+			dprintf(1, "Script started, file is %s\n", argv[1]);
+		if ((fd_ptmx = ft_openpt(O_RDWR)) == -1)
+		{
+			ft_dprintf(1, RED"======Open PTMX Failure=======\n"END);
+			exit(EXIT_FAILURE);
+		}
+		ft_dprintf(1, GREEN"Open PTMX Success\n"END);
+
+		if (ft_grantpt(fd_ptmx) == -1)
+			ft_dprintf(1, RED"Grantpt Failure : %s\n"END, strerror(errno));
+		if (ft_unlockpt(fd_ptmx) == -1)
+			ft_dprintf(1, RED"Unlockpt Failure : %s\n"END, strerror(errno));
+		ft_dprintf(1, GREEN"Grantpt and Unlockpt Success\n"END);
+
+		ft_dprintf(1, CYAN"Slave name = %s\n"END, ft_ptsname(fd_ptmx));
+
+		if ((fd_pts = open(ft_ptsname(fd_ptmx), O_RDWR)) == -1)
+		{
+			ft_dprintf(1, RED"======Open PTS Failure=======\n"END);
+			exit(EXIT_FAILURE);
+		}
+		ft_dprintf(1, GREEN"Open PTS Success\n"END);
+		/*if ((new_fd = dup2(0, fd_pts)) == -1)*/
 		/*{*/
-			/*[>name = ttyname(STDIN_FILENO);<]*/
-			/*[>ft_dprintf(1, PURPLE"tty is  : %s\n"END, name);<]*/
-			/*if ((fd_tty = open(TTYS, O_RDWR | O_NOCTTY)) < 0)*/
-			/*{*/
-				/*ft_dprintf(1, RED"==========ptmx open failure========\n"END);*/
-				/*exit(EXIT_FAILURE);*/
-			/*}*/
-			/*ft_dprintf(1, GREEN"==========ptmx open success========\n"END);*/
-			/*int is_tty = isatty(fd_tty);*/
-			/*ft_dprintf(1, GREEN"==========is_tty = %d========\n"END, is_tty);*/
-			/*int ret = read(fd_tty, &buff, 1);*/
-			/*ft_dprintf(2, ORANGE"=====ret (read) = %d=====\n"END, ret);*/
-			/*ft_dprintf(2, ORANGE"=====buf = %c=====\n"END, buff);*/
-				/*write(fd_file, &buff, 1);*/
-			/*close(fd_tty);*/
-			/*break ;*/
+		/*ft_dprintf(1, RED"======dup2 Failure=======\n"END);*/
+		/*exit(EXIT_FAILURE);*/
 		/*}*/
-		/*[>kill(father, SIGTERM);<]*/
-	/*[>}<]*/
-	/*[>else // <== SHELL LVL 2<]*/
-	/*[>{<]*/
-		/*[>if (execve(tab[0], &tab[0], environ) < 0)<]*/
-			/*[>dprintf(2, "Execeve failure : %s\n", strerror(errno));<]*/
-		/*[>exit(EXIT_FAILURE);<]*/
-	/*[>}<]*/
-	/*if (argc == 1)*/
-		/*dprintf(1, "Script done, file is typescript\n");*/
-	/*else*/
-		/*dprintf(1, "Script done, file is %s\n", argv[1]);*/
-/*}*/
+		/*ft_dprintf(1, GREEN"dup2 Success\n"END);*/
 
-int	main(int argc, char **argv, char **environ)
+
+		FD_ZERO(&rfd);
+		while (0xDEADBEEF)
+		{
+			memset(&buffer_in, 0, BUFSIZ);
+			memset(&buffer_out, 0, BUFSIZ);
+			ft_dprintf(1, GREEN"Memset buffers Success\n"END);
+			FD_SET(fd_ptmx, &rfd);
+			FD_SET(STDIN_FILENO, &rfd);
+			ret_select = select(fd_ptmx + 1, &rfd, 0, 0, tvp);
+			if (ret_select < 0 && errno != EINTR)
+			{
+				ft_dprintf(1, ORANGE"EINTR error : %s\n"END, strerror(errno));
+				break ;
+			}
+			ft_dprintf(1, GREEN"Select Success\n"END);
+			if (ret_select > 0 && FD_ISSET(STDIN_FILENO, &rfd))
+			{
+				ret_read = read(STDIN_FILENO, buffer_in, BUFSIZ);
+				if (ret_read < 0)
+				{
+					ft_dprintf(1, ORANGE"read STDIN_FILENO error\n"END);
+					break ;
+				}
+				if (ret_read == 0)
+					(void)write(fd_ptmx, buffer_in, 0);
+				if (ret_read > 0)
+				{
+					write(fd_ptmx, buffer_in, ret_read);
+				}
+				ft_dprintf(1, GREEN"Write fd_ptmx > buffer_in Success\n"END);
+			}
+			if (ret_select > 0 && FD_ISSET(fd_ptmx, &rfd))
+			{
+				ret_read = read(fd_ptmx, buffer_out, sizeof(buffer_out));
+				if (ret_read < 0)
+				{
+					ft_dprintf(1, ORANGE"buffer_out error\n"END);
+					break ;
+				}
+				write(STDOUT_FILENO, buffer_out, ret_read);
+				ft_dprintf(1, GREEN"Write STDOUT_FILENO > buffer_out Success\n"END);
+			}
+		}
+		kill(father, SIGTERM);
+		ft_dprintf(1, PURPLE"KILL Success\n"END);
+	}
+	else
+	{
+		ft_dprintf(1, PURPLE"fd_pts = %d\n"END, fd_pts);
+		ft_login_tty(fd_pts);
+		if (execve(tab[0], &tab[0], environ) < 0)
+			dprintf(2, "Execeve failure : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	if (argc == 1)
+		dprintf(1, "Script done, file is typescript\n");
+	else
+		dprintf(1, "Script done, file is %s\n", argv[1]);
+}
+
+int	main(int argc, char **argv, char	 **environ)
 {
 	int	fd;
 
@@ -124,7 +257,7 @@ int	main(int argc, char **argv, char **environ)
 		fd = open("./typescript", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (fd == -1)
 		ft_dprintf(2, "Open failure %s\n", strerror(errno));
-	ft_dprintf(1, GREEN"==========open file success========\n"END);
-	open_new_shell(argc, argv, environ, fd);
-	close(fd);
+	ft_dprintf(1, GREEN"Open typescript success\n"END);
+
+	open_new_shell(argc, argv, environ);
 }
