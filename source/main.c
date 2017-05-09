@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <termios.h>
+#include <util.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include "../libft/includes/libft.h"
@@ -136,20 +137,37 @@ void	open_new_shell(int argc, char **argv, char **environ)
 			ft_dprintf(2, "Error ft_tcgetattr : %s\n", strerror(errno));
 			exit(-1);
 		}
+		dprintf(1, GREEN"ft_tcgetattr Success\n"END);
 		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1)
 		{
 			ft_dprintf(2, "Error ioctl : %s\n", strerror(errno));
 			exit(-1);
 		}
+		dprintf(1, GREEN"Ioctl Success\n"END);
+		if (openpty(&fd_ptmx, &fd_pts, NULL, &tt, &win) == -1)
+		{
+			ft_dprintf(2, "Error openpty : %s\n", strerror(errno));
+			exit(-1);
+		}
+		dprintf(1, GREEN"Openpty Success\n"END);
+	}
+	else
+	{
+		if (openpty(&fd_ptmx, &fd_pts, NULL, NULL, NULL) == -1)
+		{
+			ft_dprintf(2, "Error openpty : %s\n", strerror(errno));
+			exit(-1);
+		}
+		dprintf(1, GREEN"Openpty Success\n"END);
 	}
 	if (tty_flag)
 	{
 		rtt = tt;
-		ft_cfmakeraw(&rtt);
+		cfmakeraw(&rtt);
 		rtt.c_cflag &= ~ECHO;
 		(void)ft_tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+		dprintf(1, GREEN"ft_tcsetattr Success\n"END);
 	}
-	/*dprintf(1, GREEN"2) dup STDIN_FILENO Success\n"END);*/
 	if ((father = fork()) < 0)
 		dprintf(2, "Fork failure : %s\n", strerror(errno));
 	else if (father > 0)
