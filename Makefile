@@ -6,7 +6,7 @@
 #    By: rabougue <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/12/10 19:16:51 by rabougue          #+#    #+#              #
-#    Updated: 2017/04/10 03:47:29 by rabougue         ###   ########.fr        #
+#    Updated: 2017/05/09 19:48:27 by rabougue         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,6 +21,7 @@ CC = gcc
 FLAG = -Wall -Wextra -Werror
 LFT = ./libft/libft.a
 SRCS =	./source/main.c\
+		./source/sys.c\
 
 OBJS = $(SRCS:.c=.o)
 

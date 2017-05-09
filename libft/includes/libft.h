@@ -6,7 +6,7 @@
 /*   By: rabougue <rabougue@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2015/11/24 18:34:24 by rabougue          #+#    #+#             */
-/*   Updated: 2017/04/09 03:43:06 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/09 20:04:56 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include <limits.h>
 # include <stdint.h>
 # include <stdbool.h>
+# include <errno.h>
 # include "../ft_dprintf/includes/ft_dprintf.h"
 # include "./colors.h"
 
@@ -117,7 +118,7 @@ char				*ft_strccat(char *s1, const char *s2, char c);
 int					ft_isspace(char c);
 char				*ft_strndup(const char *s1, size_t nb);
 void				*ft_trymalloc(size_t size);
-void				ft_critical_error(uint8_t error);
+void				ft_critical_error(char *error);
 void				ft_set_2d_tab(char **tab, int size);
 void				ft_strxcat(char *dest, char *src, int x);
 bool				ft_str_isalpha(char *str);
