@@ -145,7 +145,6 @@ int	main(int argc, char *argv[])
 		if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
 			err(1, "openpty");
 	}
-
 	if (!qflg)
 	{
 		tvec = time(NULL);

@@ -6,31 +6,44 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:45:43 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/09 19:48:08 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/10 03:51:07 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/script.h"
 
+void	ft_openpty(int *fd_ptmx, int *fd_pts)
+{
+	if ((*fd_ptmx = ft_openpt(O_RDWR)) == -1)
+		ft_critical_error("Error openpt");
+	ft_grantpt(*fd_ptmx);
+	ft_unlockpt(*fd_ptmx);
+	if ((*fd_pts = open(ft_ptsname(*fd_ptmx), O_RDWR)) == -1)
+		ft_critical_error("Error open pts");
+	ft_grantpt(*fd_pts);
+	ft_unlockpt(*fd_pts);
+}
+
 int	ft_tcsetattr(int fd, int opt, const struct termios *t)
 {
-	struct termios localterm;
+	struct termios	localterm;
 
-	if (opt & TCSASOFT) {
+	if (opt & TCSASOFT)
+	{
 		localterm = *t;
 		localterm.c_cflag |= CIGNORE;
 		t = &localterm;
 	}
-	switch (opt & ~TCSASOFT) {
-		case TCSANOW:
-			return (ioctl(fd, TIOCSETA, t));
-		case TCSADRAIN:
-			return (ioctl(fd, TIOCSETAW, t));
-		case TCSAFLUSH:
-			return (ioctl(fd, TIOCSETAF, t));
-		default:
-			errno = EINVAL;
-			return (-1);
+	if ((opt & ~TCSASOFT) == TCSANOW)
+		return (ioctl(fd, TIOCSETA, t));
+	else if ((opt & ~TCSASOFT) == TCSADRAIN)
+		return (ioctl(fd, TIOCSETAW, t));
+	else if ((opt & ~TCSASOFT) == TCSAFLUSH)
+		return (ioctl(fd, TIOCSETAF, t));
+	else
+	{
+		errno = EINVAL;
+		return (-1);
 	}
 }
 

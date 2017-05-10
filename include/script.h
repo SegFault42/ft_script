@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:44:07 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/09 20:06:46 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/10 03:45:45 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,9 @@
 #include <sys/tty.h>
 #include "../libft/includes/libft.h"
 
+#include <paths.h>
+#include <time.h>
+
 #define PTMX "/dev/ptmx"
 
 /*
@@ -38,6 +41,7 @@
 
 int		ft_tcsetattr(int fd, int opt, const struct termios *t);
 int		ft_tcgetattr(int fd, struct termios *t);
+void	ft_openpty(int *fd_ptmx, int *fd_pts);
 void	ft_cfmakeraw(struct termios *t);
 int		ft_login_tty(int fd);
 int		ft_openpt(int flags);
