@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:44:07 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/10 03:45:45 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/10 05:10:22 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,10 +35,29 @@
 
 #define PTMX "/dev/ptmx"
 
+typedef struct		s_script
+{
+	struct termios	rtt;
+	struct termios	stt;
+	struct termios	tt;
+	struct winsize	win;
+	struct timeval	*tvp;
+	pid_t			father;
+	fd_set			rfd;
+	char			buffer_in[BUFSIZ];
+	char			buffer_out[BUFSIZ];
+	char			buff;
+	int				status;
+	int				fd_ptmx;
+	int				fd_pts;
+	int				new_fd;
+	int				ret_select;
+	int				ret_read;
+	int				tty_flag;
+}					t_script;
 /*
 ** sys.c
 */
-
 int		ft_tcsetattr(int fd, int opt, const struct termios *t);
 int		ft_tcgetattr(int fd, struct termios *t);
 void	ft_openpty(int *fd_ptmx, int *fd_pts);
