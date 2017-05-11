@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/10 23:40:52 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/11 00:49:46 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 06:17:27 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,8 @@ void	get_option(char **argv)
 	while (argv[arg])
 	{
 		i = 0;
+		if (argv[arg][0] != '-')
+			break ;
 		if (argv[arg][0] == '-' && g_argp[OPT_END].active == 0)
 		{
 			check_if_option_exist(argv[arg]);

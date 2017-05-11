@@ -6,13 +6,13 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:45:43 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/10 23:18:50 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 03:08:35 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/script.h"
 
-void	ft_openpty(int *fd_ptmx, int *fd_pts)
+void	ft_openpty(int *fd_ptmx, int *fd_pts, struct winsize *win)
 {
 	if ((*fd_ptmx = ft_openpt(O_RDWR)) == -1)
 		ft_critical_error("Error openpt");
@@ -22,6 +22,7 @@ void	ft_openpty(int *fd_ptmx, int *fd_pts)
 		ft_critical_error("Error open pts");
 	ft_grantpt(*fd_pts);
 	ft_unlockpt(*fd_pts);
+	ioctl(*fd_pts, TIOCSWINSZ, (char *)win);
 }
 
 int		ft_tcsetattr(int fd, int opt, const struct termios *t)

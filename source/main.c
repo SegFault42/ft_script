@@ -46,10 +46,10 @@ void	init_tty(t_script *var_script)
 			critical_error("Error ft_tcgetattr\n");
 		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &var_script->win) == -1)
 			critical_error("Error ioctl\n");
-		ft_openpty(&var_script->fd_ptmx, &var_script->fd_pts);
+		ft_openpty(&var_script->fd_ptmx, &var_script->fd_pts, &var_script->win);
 	}
 	else
-		ft_openpty(&var_script->fd_ptmx, &var_script->fd_pts);
+		ft_openpty(&var_script->fd_ptmx, &var_script->fd_pts, &var_script->win);
 }
 
 void	make_terminal_raw(t_script *var_script)
@@ -62,6 +62,17 @@ void	make_terminal_raw(t_script *var_script)
 		ft_tcsetattr(STDIN_FILENO, TCSAFLUSH, &var_script->rtt);
 	}
 }
+
+/*void	exec_once(int fd_ptmx, int fd_pts, char *tab, char **environ)*/
+/*{*/
+	/*if (close(fd_ptmx) == -1)*/
+		/*critical_error("close ptmx failure\n");*/
+	/*if (ft_login_tty(fd_pts))*/
+		/*critical_error("login_tty failure\n");*/
+	/*if (execve(tab[0], &tab[0], environ) < 0)*/
+		/*write(2, "Execeve failure\n", 16);*/
+	/*exit(EXIT_FAILURE);*/
+/*}*/
 
 void	fork_shell(t_script *var_script, char **tab, char **environ)
 {
@@ -156,7 +167,12 @@ int		create_typescript(char *name)
 	int	fd;
 
 	if (access(name, F_OK) == 0)
-		fd = open(name, O_TRUNC | O_RDWR);
+	{
+		if (g_argp[OPT_A].active == 1)
+			fd = open(name, O_APPEND | O_RDWR);
+		else
+			fd = open(name, O_TRUNC | O_RDWR);
+	}
 	else
 		fd = open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR |
 				S_IRGRP | S_IROTH);
@@ -173,7 +189,11 @@ int		get_name_file(char **argv)
 	while (argv[i])
 	{
 		if (argv[i][0] != '-')
+		{
+			if (ft_strlen(argv[i]) > 255)
+				return (-1);
 			return (i);
+		}
 		++i;
 	}
 	return (0);
@@ -181,21 +201,37 @@ int		get_name_file(char **argv)
 
 void	write_start_or_end(char *name, int fd_typescript, int nb)
 {
-	if (nb == 0)
+	if (g_argp[OPT_Q].active == 0)
 	{
-		write(1, "Script started, output file is ", 31);
-		write(1, name, ft_strlen(name));
-		write(1, "\n", 1);
-		write(fd_typescript, "Script started on ", 18);
+		if (nb == 0)
+		{
+			write(1, "Script started, output file is ", 31);
+			write(1, name, ft_strlen(name));
+			write(1, "\n", 1);
+			write(fd_typescript, "Script started on ", 18);
+		}
+		else
+		{
+			write(1, "\nScript done, output file is ", 30);
+			write(1, name, ft_strlen(name));
+			write(1, "\n", 1);
+			write(fd_typescript, "\nScript done on ", 16);
+		}
+		print_time(fd_typescript);
 	}
-	else
+}
+
+void	get_cmd(char **argv, char *cmd)
+{
+	int	i;
+
+	i = 1;
+	while (argv[i])
 	{
-		write(1, "\nScript done, output file is ", 30);
-		write(1, name, ft_strlen(name));
-		write(1, "\n", 1);
-		write(fd_typescript, "\nScript done on ", 16);
+		ft_strcat(cmd, argv[i]);
+		ft_strcat(cmd, " ");
+		++i;
 	}
-	print_time(fd_typescript);
 }
 
 int		main(int argc, char **argv, char **environ)
@@ -203,14 +239,16 @@ int		main(int argc, char **argv, char **environ)
 	int	fd_typescript;
 	int	i;
 	static char	name[256] = {0};
+	static char	cmd[255] = {0};
 
-	memset(&name, 0, 256);
 	get_option(argv);
-	i = get_name_file(argv);
-		ft_strcat(name, i != 0 ? argv[i] : "typescript");
+	if ((i = get_name_file(argv)) == -1)
+		exit(EXIT_FAILURE);
+	if (i > 0)
+		get_cmd(&argv[i], cmd);
+	ft_strcat(name, i != 0 ? argv[i] : "typescript");
 	fd_typescript = create_typescript(name);
 	write_start_or_end(name, fd_typescript, 0);
-	script(argc, argv, environ, fd_typescript);
+		script(argc, argv, environ, fd_typescript);
 	write_start_or_end(name, fd_typescript, 1);
-
 }
