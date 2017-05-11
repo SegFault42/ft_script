@@ -6,7 +6,7 @@
 #    By: rabougue <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/12/10 19:16:51 by rabougue          #+#    #+#              #
-#    Updated: 2017/04/10 04:58:10 by rabougue         ###   ########.fr        #
+#    Updated: 2017/05/11 00:51:48 by rabougue         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -61,6 +61,7 @@ SRC = ./ft_dprintf/sources/ft_dprintf.c\
 	  ./ft_strchr.c\
 	  ./ft_strsub.c\
 	  ./ft_strnew.c\
+	  ./ft_strstr.c\
 	  ./ft_ultoa.c\
 	  ./ft_debug.c\
 	  ./ft_itoa.c\

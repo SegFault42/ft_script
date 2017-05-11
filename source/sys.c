@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:45:43 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/10 03:51:07 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/10 23:18:50 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ void	ft_openpty(int *fd_ptmx, int *fd_pts)
 	ft_unlockpt(*fd_pts);
 }
 
-int	ft_tcsetattr(int fd, int opt, const struct termios *t)
+int		ft_tcsetattr(int fd, int opt, const struct termios *t)
 {
 	struct termios	localterm;
 
@@ -49,26 +49,27 @@ int	ft_tcsetattr(int fd, int opt, const struct termios *t)
 
 void	ft_cfmakeraw(struct termios *t)
 {
-	t->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+	t->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL |
+			IXON);
 	t->c_oflag &= ~OPOST;
-	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-	t->c_cflag &= ~(CSIZE|PARENB);
+	t->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	t->c_cflag &= ~(CSIZE | PARENB);
 	t->c_cflag |= CS8;
 }
 
-int	ft_tcgetattr(int fd, struct termios *t)
+int		ft_tcgetattr(int fd, struct termios *t)
 {
 	return (ioctl(fd, TIOCGETA, t));
 }
 
-int	ft_isatty(int fd)
+int		ft_isatty(int fd)
 {
 	struct termios	t;
 
 	return(ft_tcgetattr(fd, &t) != -1);
 }
 
-int ft_login_tty(int fd)
+int		ft_login_tty(int fd)
 {
 	(void)setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
@@ -81,12 +82,12 @@ int ft_login_tty(int fd)
 	return (0);
 }
 
-int	ft_unlockpt(int fd)
+int		ft_unlockpt(int fd)
 {
 	return ioctl(fd, TIOCPTYUNLK);
 }
 
-int	ft_openpt(int flags)
+int		ft_openpt(int flags)
 {
 	int fd = open("/dev/ptmx", flags);
 	if (fd >= 0)
@@ -94,7 +95,7 @@ int	ft_openpt(int flags)
 	return -1;
 }
 
-int	ft_grantpt(int fd)
+int		ft_grantpt(int fd)
 {
 	return (ioctl(fd, TIOCPTYGRANT));
 }

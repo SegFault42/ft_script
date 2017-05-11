@@ -1,5 +1,16 @@
 #include "../include/script.h"
 
+t_argp	g_argp[] =
+{
+	{"a", 0, "Append the output to file or typescript, retaining the prior contents."},
+	{"d", 0, "a"},
+	{"F", 0, "a"},
+	{"p", 0, "a"},
+	{"q", 0, "a"},
+	{"r", 0, "a"},
+	{0, 0, 0}
+};
+
 void	critical_error(char *error)
 {
 	write(2, error, ft_strlen(error));
@@ -74,6 +85,47 @@ void	re_init_sub_shell(t_script *var_script)
 	FD_SET(STDIN_FILENO, &var_script->rfd);
 }
 
+void	reset_terminal(t_script *var_script)
+{
+	kill(var_script->father, SIGTERM);
+	if (var_script->tty_flag)
+		ft_tcsetattr(STDIN_FILENO, TCSAFLUSH, &var_script->tt);
+}
+
+bool	select_stdin(t_script *var_script)
+{
+	if (var_script->ret_select > 0 && FD_ISSET(STDIN_FILENO, &var_script->rfd))
+	{
+		var_script->ret_read = read(STDIN_FILENO, var_script->buffer_in,
+				BUFSIZ);
+		if (var_script->ret_read < 0)
+			return (true);
+		if (var_script->ret_read == 0)
+			return (true);
+		if (var_script->ret_read > 0)
+			write(var_script->fd_ptmx, var_script->buffer_in,
+					var_script->ret_read);
+	}
+	return (false);
+}
+
+bool	select_ptmx(t_script *var_script, int fd_typescript)
+{
+	if (var_script->ret_select > 0 &&
+			FD_ISSET(var_script->fd_ptmx, &var_script->rfd))
+	{
+		var_script->ret_read = read(var_script->fd_ptmx, var_script->buffer_out,
+				sizeof(var_script->buffer_out));
+		if (var_script->ret_read < 0)
+			return (true);
+		if (var_script->ret_read == 0)
+			return (true);
+		write(STDOUT_FILENO, var_script->buffer_out, var_script->ret_read);
+		write(fd_typescript, var_script->buffer_out, var_script->ret_read);
+	}
+	return (false);
+}
+
 void	script(int argc, char **argv, char **environ, int fd_typescript)
 {
 	char	*tab[] = {"/bin/zsh", NULL};
@@ -87,73 +139,78 @@ void	script(int argc, char **argv, char **environ, int fd_typescript)
 	while (0xDEADBEEF)
 	{
 		re_init_sub_shell(&var_script);
-		var_script.ret_select = select(var_script.fd_ptmx + 1, &var_script.rfd, 0, 0, var_script.tvp);
+		var_script.ret_select = select(var_script.fd_pts, &var_script.rfd, 0, 0,
+				var_script.tvp);
 		if (var_script.ret_select < 0 && errno != EINTR)
-		{
-			write(2, "EINTR error\n", 12);
 			break ;
-		}
-		if (var_script.ret_select > 0 && FD_ISSET(STDIN_FILENO, &var_script.rfd))
-		{
-			var_script.ret_read = read(STDIN_FILENO, var_script.buffer_in, BUFSIZ);
-			if (var_script.ret_read < 0)
-			{
-				write(2, "read STDIN_FILENO error\n", 24);
-				break ;
-			}
-			if (var_script.ret_read == 0)
-			{
-				write(var_script.fd_ptmx, var_script.buffer_in, 0);
-				break ;
-			}
-			if (var_script.ret_read > 0)
-				write(var_script.fd_ptmx, var_script.buffer_in, var_script.ret_read);
-		}
-		if (var_script.ret_select > 0 && FD_ISSET(var_script.fd_ptmx, &var_script.rfd))
-		{
-			var_script.ret_read = read(var_script.fd_ptmx, var_script.buffer_out, sizeof(var_script.buffer_out));
-			if (var_script.ret_read < 0)
-			{
-				write(2, "buffer_out error\n", 17);
-				break ;
-			}
-			if (var_script.ret_read == 0)
-				break ;
-			write(STDOUT_FILENO, var_script.buffer_out, var_script.ret_read);
-			write(fd_typescript, var_script.buffer_out, var_script.ret_read);
-		}
+		if (select_stdin(&var_script) == true)
+			break ;
+		if (select_ptmx(&var_script, fd_typescript) == true)
+			break ;
 	}
-	kill(var_script.father, SIGTERM);
-	if (var_script.tty_flag)
-		ft_tcsetattr(STDIN_FILENO, TCSAFLUSH, &var_script.tt);
+	reset_terminal(&var_script);
 }
 
-static int	create_typescript()
+int		create_typescript(char *name)
 {
 	int	fd;
 
-	if (access("./typescript", F_OK) == 0)
-		fd = open("./typescript", O_APPEND | O_RDWR);
+	if (access(name, F_OK) == 0)
+		fd = open(name, O_TRUNC | O_RDWR);
 	else
-		fd = open("./typescript", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		fd = open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR |
+				S_IRGRP | S_IROTH);
 	if (fd == -1)
 		critical_error("Open failure\n");
 	return (fd);
 }
 
-int	main(int argc, char **argv, char **environ)
+int		get_name_file(char **argv)
+{
+	int	i;
+
+	i = 1;
+	while (argv[i])
+	{
+		if (argv[i][0] != '-')
+			return (i);
+		++i;
+	}
+	return (0);
+}
+
+void	write_start_or_end(char *name, int fd_typescript, int nb)
+{
+	if (nb == 0)
+	{
+		write(1, "Script started, output file is ", 31);
+		write(1, name, ft_strlen(name));
+		write(1, "\n", 1);
+		write(fd_typescript, "Script started on ", 18);
+	}
+	else
+	{
+		write(1, "\nScript done, output file is ", 30);
+		write(1, name, ft_strlen(name));
+		write(1, "\n", 1);
+		write(fd_typescript, "\nScript done on ", 16);
+	}
+	print_time(fd_typescript);
+}
+
+int		main(int argc, char **argv, char **environ)
 {
 	int	fd_typescript;
+	int	i;
+	static char	name[256] = {0};
 
-	fd_typescript = create_typescript();
+	memset(&name, 0, 256);
+	get_option(argv);
+	i = get_name_file(argv);
+		ft_strcat(name, i != 0 ? argv[i] : "typescript");
+	fd_typescript = create_typescript(name);
+	write_start_or_end(name, fd_typescript, 0);
+	script(argc, argv, environ, fd_typescript);
+	write_start_or_end(name, fd_typescript, 1);
 
-	write(1, "Script started, output file is typescript\n", 42);
-	write(fd_typescript, "Script started on ", 18);
-	print_time(fd_typescript);
-
-		script(argc, argv, environ, fd_typescript);
-
-	write(1, "\nScript done, output file is typescript\n", 41);
-	write(fd_typescript, "\nScript done on ", 16);
-	print_time(fd_typescript);
 }

@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:44:07 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/10 05:10:22 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 00:49:45 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,19 @@
 
 #define PTMX "/dev/ptmx"
 
+typedef enum option option;
+
+enum option
+{
+	OPT_A,
+	OPT_D,
+	OPT_F,
+	OPT_P,
+	OPT_Q,
+	OPT_R,
+	OPT_END
+};
+
 typedef struct		s_script
 {
 	struct termios	rtt;
@@ -50,14 +63,23 @@ typedef struct		s_script
 	int				status;
 	int				fd_ptmx;
 	int				fd_pts;
+	int				fd_typescript;
 	int				new_fd;
 	int				ret_select;
 	int				ret_read;
 	int				tty_flag;
 }					t_script;
+
+typedef struct		s_argp
+{
+	char			*sign;
+	bool			active;
+	char			*description;
+}					t_argp;
+
 /*
-** sys.c
-*/
+ ** sys.c
+ */
 int		ft_tcsetattr(int fd, int opt, const struct termios *t);
 int		ft_tcgetattr(int fd, struct termios *t);
 void	ft_openpty(int *fd_ptmx, int *fd_pts);
@@ -68,5 +90,7 @@ int		ft_unlockpt(int fd);
 char	*ft_ptsname(int fd);
 int		ft_grantpt(int fd);
 int		ft_isatty(int fd);
+
+void	get_option(char **argv);
 
 #endif
