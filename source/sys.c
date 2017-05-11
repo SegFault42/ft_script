@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:45:43 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/11 03:08:35 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 21:57:55 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ int		ft_isatty(int fd)
 {
 	struct termios	t;
 
-	return(ft_tcgetattr(fd, &t) != -1);
+	return (ft_tcgetattr(fd, &t) != -1);
 }
 
 int		ft_login_tty(int fd)
@@ -75,25 +75,27 @@ int		ft_login_tty(int fd)
 	(void)setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
 		return (-1);
-	(void) dup2(fd, 0);
-	(void) dup2(fd, 1);
-	(void) dup2(fd, 2);
+	(void)dup2(fd, 0);
+	(void)dup2(fd, 1);
+	(void)dup2(fd, 2);
 	if (fd > 2)
-		(void) close(fd);
+		(void)close(fd);
 	return (0);
 }
 
 int		ft_unlockpt(int fd)
 {
-	return ioctl(fd, TIOCPTYUNLK);
+	return (ioctl(fd, TIOCPTYUNLK));
 }
 
 int		ft_openpt(int flags)
 {
-	int fd = open("/dev/ptmx", flags);
+	int	fd;
+
+	fd = open("/dev/ptmx", flags);
 	if (fd >= 0)
 		return (fd);
-	return -1;
+	return (-1);
 }
 
 int		ft_grantpt(int fd)
@@ -103,11 +105,12 @@ int		ft_grantpt(int fd)
 
 char	*ft_ptsname(int fd)
 {
-	static char	ptsnamebuf[ 128];
+	static char	ptsnamebuf[128];
 	int			error;
-	char		*retval = NULL;
+	char		*retval;
 	struct stat	sbuf;
 
+	retval = NULL;
 	error = ioctl(fd, TIOCPTYGNAME, ptsnamebuf);
 	if (!error)
 	{

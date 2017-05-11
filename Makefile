@@ -6,7 +6,7 @@
 #    By: rabougue <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/12/10 19:16:51 by rabougue          #+#    #+#              #
-#    Updated: 2017/05/11 07:00:27 by rabougue         ###   ########.fr        #
+#    Updated: 2017/05/11 21:44:41 by rabougue         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,11 +18,14 @@ END = \033[0m
 ##################################_COMPILATION_#################################
 NAME = ft_script
 CC = gcc
-FLAG = -Weverything
+FLAG = -Wall -Wextra -Werror
 LFT = ./libft/libft.a
 SRCS =	./source/main.c\
 		./source/sys.c\
 		./source/parsing_arg.c\
+		./source/tools.c\
+		./source/terminal.c\
+		./source/select.c\
 
 OBJS = $(SRCS:.c=.o)
 

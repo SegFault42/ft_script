@@ -6,25 +6,24 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/10 23:40:52 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/11 06:17:27 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 21:54:42 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/script.h"
 
-extern t_argp g_argp[];
+extern t_argp	g_argp[];
 
-static void	usage(char option)
+static void		usage(char option)
 {
 	const char*error = "usage: script [-adkpqr] [-t time] [file [command ...]]";
-	const char*error_2 = "[file	 ...]";
 
-	ft_dprintf(STDERR_FILENO, "script: illegal option -- %c\n%s%s\n", option,
-			error, error_2);
+	ft_dprintf(STDERR_FILENO, "script: illegal option -- %c\n%s\n", option,
+			error);
 	exit(EXIT_FAILURE);
 }
 
-static void	check_if_option_exist(char *argument)
+static void		check_if_option_exist(char *argument)
 {
 	int	i;
 	int	j;
@@ -52,7 +51,7 @@ static void	check_if_option_exist(char *argument)
 	}
 }
 
-void	get_option(char **argv)
+void			get_option(char **argv)
 {
 	int		arg;
 	uint8_t	i;
