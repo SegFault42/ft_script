@@ -6,14 +6,14 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/11 21:23:03 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/12 01:10:26 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/12 03:36:02 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/script.h"
 
 extern t_argp	g_argp[];
-char			*g_tab[] = {"llllllllllllll", NULL};
+/*static char			*g_tab[] = {"/bin/ls", NULL};*/
 
 void	init_tty(t_script *var_script)
 {
@@ -40,21 +40,21 @@ void	make_terminal_raw(t_script *var_script)
 	}
 }
 
-void	create_shell(t_script *var_script, char **tab, char **environ)
+void	create_shell(t_script *var_script, char **tab, char **environ, char **argv)
 {
-	/*static char	*cmd[] = {"iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii", 0};*/
+	char	binary[256];
 
+	printf("%s\n", var_script->cmd);
+	ft_memset(binary, 0, 256);
+	ft_strcat(binary, "/bin/");
+	ft_strcat(binary, argv[0]);
 	if (close(var_script->fd_ptmx) == -1)
 		critical_error("close ptmx failure\n");
 	if (ft_login_tty(var_script->fd_pts))
 		critical_error("login_tty failure\n");
 	if (var_script->cmd[0])
 	{
-		/*ft_memset(g_tab[1], 0, 255);*/
-		/*printf("%zu\n", sizeof(g_tab[0]));*/
-		printf("%s\n", g_tab[0]);
-		printf("%s\n", g_tab[1]);
-		if (execve(g_tab[0], &g_tab[0], environ) < 0)
+		if (execve(binary, &argv[0], environ) < 0)
 			write(2, "Execeve failure()\n", 16);
 	}
 	else
