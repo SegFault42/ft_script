@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/11 21:43:16 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/12 03:36:03 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 21:55:42 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ t_argp	g_argp[] =
 	{0, 0, {0}}
 };
 
-void	fork_shell(t_script *var_script, char **tab, char **environ, char **argv)
+void	fork_shell(t_script *var_script, char **tab, char **environ)
 {
 	if ((var_script->father = fork()) < 0)
 	{
@@ -32,7 +32,7 @@ void	fork_shell(t_script *var_script, char **tab, char **environ, char **argv)
 	}
 	if (var_script->father == 0)
 	{
-		create_shell(var_script, tab, environ, argv);
+		create_shell(var_script, tab, environ);
 		close(var_script->fd_pts);
 	}
 }
@@ -78,13 +78,13 @@ void	write_start_or_end(char *name, int fd_typescript, int nb)
 	}
 }
 
-void	script(char **environ, t_script *var_script, char **argv)
+void	script(char **environ, t_script *var_script)
 {
 	static char	*tab[] = {"/bin/zsh", NULL};
 
 	init_tty(var_script);
 	make_terminal_raw(var_script);
-	fork_shell(var_script, tab, environ, argv);
+	fork_shell(var_script, tab, environ);
 	FD_ZERO(&var_script->rfd);
 	while (0xDEADBEEF)
 	{
@@ -115,7 +115,7 @@ int		main(int argc, char **argv, char **environ)
 	ft_strcat(var_script.name, i != 0 ? argv[i] : "typescript");
 	var_script.fd_typescript = create_typescript(var_script.name);
 	write_start_or_end(var_script.name, var_script.fd_typescript, 0);
-	script(environ, &var_script, &argv[++i]);
+	script(environ, &var_script);
 	write_start_or_end(var_script.name, var_script.fd_typescript, 1);
 	(void)argc;
 }

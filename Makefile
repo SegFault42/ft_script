@@ -6,7 +6,7 @@
 #    By: rabougue <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2015/12/10 19:16:51 by rabougue          #+#    #+#              #
-#    Updated: 2017/05/11 21:44:41 by rabougue         ###   ########.fr        #
+#    Updated: 2017/05/12 03:40:35 by rabougue         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,6 +22,7 @@ FLAG = -Wall -Wextra -Werror
 LFT = ./libft/libft.a
 SRCS =	./source/main.c\
 		./source/sys.c\
+		./source/sys2.c\
 		./source/parsing_arg.c\
 		./source/tools.c\
 		./source/terminal.c\

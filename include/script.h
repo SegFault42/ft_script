@@ -6,7 +6,7 @@
 /*   By: rabougue <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/05/09 19:44:07 by rabougue          #+#    #+#             */
-/*   Updated: 2017/05/12 01:35:22 by rabougue         ###   ########.fr       */
+/*   Updated: 2017/05/11 21:53:08 by rabougue         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ void				get_cmd(char **argv, char *cmd);
 void				reset_terminal(t_script *var_script);
 void				re_init_sub_shell(t_script *var_script);
 void				create_shell(t_script *var_script, char **tab,
-								char **environ, char **argv);
+								char **environ);
 void				make_terminal_raw(t_script *var_script);
 void				init_tty(t_script *var_script);
 /*
